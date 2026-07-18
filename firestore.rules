@@ -1,0 +1,107 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for auth verification
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.uid == 'V7eWB7Evyuetam8yOJfG2aaDvtO2' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isReseller() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'reseller';
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+      allow list: if isAdmin();
+    }
+
+    // Order Management Rules
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+      allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 100);
+    }
+
+    // Service Catalog Rules
+    match /services/{serviceId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /service_categories/{catId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // Financial Transaction Rules
+    match /transactions/{txId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 100);
+    }
+
+    // Support Ticket Rules
+    match /tickets/{ticketId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 100);
+    }
+
+    // Identity Recovery Rules
+    match /password_reset_requests/{requestId} {
+      allow create: if true; 
+      allow list: if isAdmin() || (request.query.limit <= 20);
+      allow read, update, delete: if isAdmin();
+      allow update: if isSignedIn() 
+                    && (resource.data.userId == request.auth.uid || resource.data.userId == 'unknown')
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mustChangePassword', 'status', 'used', 'finalizedAt']);
+    }
+
+    // Authorized Resellers - Protected Collection
+    match /authorized_resellers/{resellerId} {
+      // Allow query by email for auth sync logic during login (with limit check)
+      allow list: if isSignedIn() && (isAdmin() || request.query.limit == 1);
+      // Full access only for admin
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // System Log Rules
+    match /activity_logs/{logId} {
+      allow read, list: if isAdmin();
+      allow create: if true;
+    }
+
+    // System Metadata Rules - Pricing and Reseller Config Protection
+    match /system_metadata/{docId} {
+      // Anyone can read public metadata for pricing calculations
+      allow read: if docId in ['pricing_config', 'reseller_config', 'site_config'];
+      // Only admin can write
+      allow write: if isAdmin();
+      // Don't allow listing system metadata
+      allow list: if isAdmin();
+    }
+  }
+}

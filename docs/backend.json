@@ -1,0 +1,105 @@
+
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with balance and stats.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "balance": { "type": "number", "default": 0 },
+        "totalSpent": { "type": "number", "default": 0 },
+        "totalOrders": { "type": "number", "default": 0 },
+        "role": { "type": "string", "enum": ["user", "reseller", "admin"], "default": "user" },
+        "status": { "type": "string", "enum": ["active", "suspended", "banned"], "default": "active" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "balance"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "An SMM order placed by a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "serviceId": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "link": { "type": "string" },
+        "quantity": { "type": "number" },
+        "charge": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "processing", "completed", "cancelled", "partial", "refunded"] },
+        "remains": { "type": "number", "default": 0 },
+        "start_count": { "type": "number", "default": 0 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "serviceId", "link", "quantity", "charge", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A record of funds added to a user's wallet.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Service": {
+      "title": "Service",
+      "description": "An SMM service package.",
+      "type": "object",
+      "properties": {
+        "serviceId": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "rate": { "type": "string" },
+        "min": { "type": "string" },
+        "max": { "type": "string" },
+        "refill": { "type": "boolean" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "disabled"], "default": "active" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["serviceId", "name", "category", "rate"]
+    },
+    "AuthorizedReseller": {
+      "title": "Authorized Reseller",
+      "description": "An email pre-approved for reseller status.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email"]
+    }
+  },
+  "auth": {
+    "providers": ["password", "google.com"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/User" },
+      "description": "User profile data."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/backend/entities/Order" },
+      "description": "Global order tracking."
+    },
+    "/transactions/{txnId}": {
+      "schema": { "$ref": "#/backend/entities/Transaction" },
+      "description": "Fund addition history."
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/backend/entities/Service" },
+      "description": "Catalog of SMM services."
+    },
+    "/authorized_resellers/{resellerId}": {
+      "schema": { "$ref": "#/backend/entities/AuthorizedReseller" },
+      "description": "Approved partner registry."
+    }
+  }
+}

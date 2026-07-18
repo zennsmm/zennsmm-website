@@ -1,0 +1,23 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-social",
+      "description": "Professional abstract social media marketing visual",
+      "imageUrl": "https://picsum.photos/seed/zennsmm1/1200/800",
+      "imageHint": "social media marketing abstract blue"
+    },
+    {
+      "id": "feature-growth",
+      "description": "Growth chart showing social media progress",
+      "imageUrl": "https://picsum.photos/seed/zennsmm2/600/400",
+      "imageHint": "business growth chart"
+    },
+    {
+      "id": "trust-security",
+      "description": "Security and trust icons representing safe payments",
+      "imageUrl": "https://picsum.photos/seed/zennsmm3/600/400",
+      "imageHint": "secure digital payment"
+    }
+  ]
+}
